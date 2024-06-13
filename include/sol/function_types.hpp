@@ -107,7 +107,12 @@ namespace sol {
 			using uFx = meta::unqualified_t<Fx>;
 			if constexpr (sizeof...(Args) < 1) {
 				using C = typename meta::bind_traits<uFx>::object_type;
-				lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx>::template call<is_yielding, no_trampoline>;
+				
+				auto lambda = [](lua_State* L) -> int {
+					return function_detail::upvalue_this_member_variable<C, Fx>::template call<is_yielding, no_trampoline>(L);
+				};
+				
+				lua_CFunction freefunc = static_cast<lua_CFunction>(+lambda);
 
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
