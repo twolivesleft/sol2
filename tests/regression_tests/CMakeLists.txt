@@ -24,3 +24,5 @@
 
 add_subdirectory(1011)
 add_subdirectory(simple)
+
+add_subdirectory(finalized_userdata)

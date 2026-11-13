@@ -234,6 +234,10 @@ namespace sol { namespace stack {
 					void* memory = lua_touserdata(L_, index);
 					memory = detail::align_usertype_unique_destructor(memory);
 					detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(memory);
+					if (pdx == nullptr) {
+						handler(L_, index, type::userdata, indextype, "attempt to use finalized userdata");
+						return false;
+					}
 					bool success = &detail::usertype_unique_alloc_destroy<element, actual> == pdx;
 					if (!success) {
 						memory = detail::align_usertype_unique_tag<true>(memory);

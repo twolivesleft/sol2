@@ -156,6 +156,10 @@ namespace sol { namespace stack {
 
 				tracking.use(1);
 				void* memory = lua_touserdata(L, index);
+				void* destructor_memory = detail::align_usertype_unique_destructor(memory);
+				if (*static_cast<detail::unique_destructor*>(destructor_memory) == nullptr) {
+					luaL_error(L, "attempt to use finalized userdata");
+				}
 				void* aligned_memory = detail::align_usertype_unique<actual>(memory);
 				actual* typed_memory = static_cast<actual*>(aligned_memory);
 				return *typed_memory;
@@ -205,6 +209,7 @@ namespace sol { namespace stack {
 				void* memory = lua_touserdata(L, index);
 				memory = detail::align_usertype_unique_destructor(memory);
 				detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(memory);
+				if (pdx == nullptr) luaL_error(L, "attempt to use finalized userdata");
 				if (&detail::usertype_unique_alloc_destroy<element, Tu> == pdx) {
 					memory = detail::align_usertype_unique_tag<true, false>(memory);
 					memory = detail::align_usertype_unique<actual, true, false>(memory);
@@ -898,6 +903,7 @@ namespace sol { namespace stack {
 			void* rawdata = detail::align_usertype_pointer(memory);
 			void** pudata = static_cast<void**>(rawdata);
 			void* udata = *pudata;
+			if (udata == nullptr) luaL_error(L, "attempt to use null or finalized userdata");
 			return get_no_lua_nil_from(L, udata, index, tracking);
 		}
 

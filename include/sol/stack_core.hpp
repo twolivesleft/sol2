@@ -446,8 +446,15 @@ namespace sol {
 			void* memory = lua_touserdata(L, 1);
 			memory = align_usertype_unique_destructor(memory);
 			unique_destructor& dx = *static_cast<unique_destructor*>(memory);
+			// Finalized userdata can remain reachable through weak-key tables or
+			// resurrection. Invalidate both access paths before releasing ownership.
+			if (dx == nullptr) return 0;
+			unique_destructor destroy = dx;
+			dx = nullptr;
+			void* raw = align_usertype_pointer(lua_touserdata(L, 1));
+			*static_cast<void**>(raw) = nullptr;
 			memory = align_usertype_unique_tag<true>(memory);
-			(dx)(memory);
+			(destroy)(memory);
 			return 0;
 		}
 
